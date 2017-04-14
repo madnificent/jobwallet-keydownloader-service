@@ -18,12 +18,16 @@ get '/fetch' do
   }.to_json
 end
 
+
+## Fetches all relations of a given type from a parsed document
 def fetch_rels( nokogiri_document, relation, attr="href" )
   nokogiri_document.css("link[rel=#{relation}]").map do |element|
     element.attribute(attr).value
   end
 end
 
+
+## Helper for fetching a URL
 def fetch_url( url )
   # See http://stackoverflow.com/questions/27407938/ruby-open-uri-redirect-forbidden#27411667
   uri = URI.parse(url)
