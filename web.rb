@@ -1,6 +1,6 @@
 require 'open-uri'
 
-get '/fetch' do
+get %r{fetch/?} do
   content_type 'application/json'
 
   location = params['location']
