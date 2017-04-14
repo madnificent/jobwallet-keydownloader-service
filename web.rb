@@ -15,6 +15,40 @@ get '/fetch' do
     store_remote_file normalized_uri, "pubkey"
   end
 
+  authorative_body_data = <<TTL
+    <#{location}> a ext:AuthorativeBody;
+      ext:hasWallet #{wallets.map { |w| "<#{w[:uri]}>" }.join(",") };
+      ext:hasPubkey #{keys.map { |k| "<#{k[:uri]}>" }.join(",") };
+      mu:uuid "#{generate_uuid}".
+TTL
+  wallets_data = wallets.map do |wallet|
+    <<TTL
+      <#{wallet[:uri]}> a ext:JobWallet;
+        ext:hasFile <#{wallet[:pathname]}>;
+        mu:uuid "#{generate_uuid}".
+TTL
+  end.join("\n")
+  keys_data = keys.map do |key|
+    <<TTL
+      <#{key[:uri]}> a ext:PublicKey;
+        ext:hasFile <#{key[:pathname]}>;
+        mu:uuid "#{generate_uuid}".
+TTL
+  end.join("\n")
+
+  update <<SPARQL
+    PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
+    PREFIX mu: <http://mu.semte.ch/vocabularies/core/>
+
+    INSERT DATA {
+      GRAPH <#{settings.graph}> {
+ #{authorative_body_data}
+ #{wallets_data}
+ #{keys_data}
+      }
+    }
+SPARQL
+
   {
     data: {
       attributes: {
