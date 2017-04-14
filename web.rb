@@ -4,6 +4,14 @@ get %r{fetch/?} do
   content_type 'application/json'
 
   location = params['location']
+
+  creation_info = fetch_authorative_body_info location
+
+  { data: { attributes: creation_info } }.to_json
+end
+
+## Downloads the authorative body to fetch the necessary contents
+def fetch_authorative_body_info( location )
   doc = Nokogiri::HTML( fetch_url params['location'] )
 
   wallets = fetch_rels(doc, "jobwallet").map do |wallet_location|
@@ -17,6 +25,7 @@ get %r{fetch/?} do
 
   authorative_body_data = <<TTL
     <#{location}> a ext:AuthorativeBody;
+      ext:isFetched "true";
       ext:hasWallet #{wallets.map { |w| "<#{w[:uri]}>" }.join(",") };
       ext:hasPubkey #{keys.map { |k| "<#{k[:uri]}>" }.join(",") };
       mu:uuid "#{generate_uuid}".
@@ -49,14 +58,8 @@ TTL
     }
 SPARQL
 
-  {
-    data: {
-      attributes: {
-        wallets: wallets,
-        keys: keys
-      }
-    }
-  }.to_json
+  { wallets: wallets, keys: keys }
+
 end
 
 
