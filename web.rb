@@ -1,8 +1,23 @@
-# see https://github.com/mu-semtech/mu-ruby-template for more info
-get '/' do
 require 'open-uri'
+
+get '/fetch' do
   content_type 'application/json'
-  { data: { attributes: { hello: 'world' } } }.to_json
+
+  location = params['location']
+  doc = Nokogiri::HTML( fetch_url params['location'] )
+  wallets = fetch_rels(doc, "jobwallet")
+  keys = fetch_rels(doc, "pubkey")
+
+  {
+    data: {
+      attributes: {
+        wallets: wallets.map { |w| URI::join location, w },
+        keys: keys.map { |k| URI::join location, k }
+      }
+    }
+  }.to_json
+end
+
 def fetch_rels( nokogiri_document, relation, attr="href" )
   nokogiri_document.css("link[rel=#{relation}]").map do |element|
     element.attribute(attr).value
